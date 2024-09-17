@@ -1,0 +1,295 @@
+
+
+Code:
+
+import React from 'react';
+import {
+  DatePicker,
+  DateValidationError,
+  LocalizationProvider,
+} from '@mui/x-date-pickers';
+import { Box } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import '../../styles/variables.scss';
+import { max, subtract } from 'lodash';
+import { addDays, addYears } from 'date-fns';
+import styles from './index.module.scss';
+import { read } from 'fs';
+
+type CustomDatePickerProps = {
+  value: Date | undefined;
+  onChange: (date: Date | null) => void;
+  error?: boolean;
+  errorMessage?: string | null;
+  maxDate?: Date;
+  futureDate: boolean;
+  fixedDate?: boolean;
+  errorExist?: boolean;
+  dobDate?: boolean;
+  readOnly?: boolean;
+  startDate?: Date;
+  iconStyles?: React.CSSProperties;
+  disabled?: boolean;
+  className?: string;
+};
+
+const getYesterday = () => {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+};
+const getDate = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+};
+const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
+  value,
+  onChange,
+  error = false,
+  errorMessage = null,
+  maxDate,
+  futureDate,
+  startDate,
+  errorExist,
+  fixedDate, // maxDate prop
+  dobDate,
+  readOnly,
+  iconStyles,
+  disabled,
+  className,
+}) => {
+  const calculatedMinDate = maxDate
+    ? new Date(
+        maxDate.getFullYear() - 100,
+        maxDate.getMonth(),
+        maxDate.getDate()
+      )
+    : new Date();
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      const isValidDate = !isNaN(date.getTime());
+      if (isValidDate) {
+        const formattedDate = getDate(date).toISOString().split('T')[0];
+        // console.log('formattedDate', formattedDate);
+        onChange(new Date(formattedDate));
+      } else {
+        // console.error('Invalid date:', date);
+      }
+    } else {
+      onChange(null);
+    }
+  };
+  const today = new Date();
+  const fixDates = new Date(new Date().setDate(new Date().getDate() - 59));
+  // const fixDates = subtract(60,new Date()) // 60 days from today
+  const min60 = new Date(new Date().getDate() - 60);
+
+  const handleError = (error: DateValidationError, value: Date | null) => {
+    // console.error('Date picker error:', error);
+  };
+
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        position: 'relative',
+        // border:'1px solid #a6a6a6',
+        // borderRadius:'2px',
+      }}
+    >
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <DatePicker
+          localeText={{
+            fieldMonthPlaceholder: () => 'MMM',
+          }}
+          value={value}
+          onChange={handleDateChange} // Pass the handler that accepts Date | null
+          onError={handleError}
+          minDate={
+            dobDate
+              ? calculatedMinDate
+              : undefined || fixedDate
+              ? fixDates
+              : undefined || startDate
+              ? startDate
+              : undefined
+          }
+          maxDate={futureDate ? maxDate || new Date() : undefined}
+          format="dd MMM yyyy"
+          sx={{
+            width: '100%',
+            // cursor:'not-alowed',
+            fieldset: {
+              border: '1px solid #8A8A8A',
+              borderColor: errorExist ? '#E28619' : '#8A8A8A;',
+              borderRadius: 0.5,
+              color: '#051B46',
+              fontSize: 26,
+            },
+            '&:hover': {
+              fieldset: {
+                borderColor: readOnly ? '#8A8A8A' : '#1859B4 !important',
+              },
+              '.MuiOutlinedInput-notchedOutline': {
+                borderColor: readOnly ? '#8A8A8A' : '#1859B4',
+              },
+            },
+            '&:focus-within': {
+              fieldset: {
+                borderColor: readOnly ? '#8A8A8A' : '#1859B4 !important',
+              },
+              '.MuiOutlinedInput-notchedOutline': {
+                borderColor: readOnly ? '#8A8A8A' : '#1859B4 !important',
+              },
+            },
+            '& input::placeholder': {
+              // color: 'red',
+              fontSize: 16,
+            },
+            '& .MuiInputBase-input': {
+              color: '#051b46', // Text color for the input field
+              fontSize: 16,
+              textAlign: 'left',
+              fontWeight: 400,
+              cursor: readOnly ? 'not-allowed' : 'default',
+
+              //       border- right: 1.5px solid gray;
+              // height: 7px;
+              // margin-right: -13px
+            },
+            input: {
+              // color: '#051b46',
+              fontSize: 16,
+              textAlign: 'left',
+              fontWeight: 400,
+            },
+            '& .MuiInputBase-root': {
+              backgroundColor: readOnly ? '#f6f6f6' : '#fff',
+              height: 40,
+              gap: '8px',
+              flexDirection: 'row',
+              width: '100%',
+              cursor: readOnly ? 'not-allowed' : 'default',
+            },
+          }}
+          // slotProps={{
+          //   textField: {
+          //     // size: 'medium',
+          //     // fullWidth: true,
+          //     // required: false,
+          //     autoFocus: false,
+          //     error: !!error,
+          //     helperText: errorMessage || null,
+          //   },
+          //   openPickerIcon: {
+          //     component: () => (
+          //       <img
+          //         width="24px"
+          //         height="24px"
+          //         src="../../../assets/images/date-picker.png"
+          //         alt="DatePickerIcon"
+          //       />
+          //     ),
+          //   },
+          // }}
+          slotProps={{
+            textField: {
+              // size: 'medium',
+              // fullWidth: true,
+              // required: false,
+              autoFocus: false,
+              error: !!error,
+              helperText: errorMessage || null,
+            },
+            openPickerIcon: {
+              component: () => (
+                <img
+                  width="24px"
+                  height="24px"
+                  src="../../../assets/images/date-picker.png"
+                  alt="DatePickerIcon"
+                  style={iconStyles}
+                  loading="lazy"
+                />
+              ),
+            },
+          }}
+          readOnly={readOnly}
+          disabled={disabled}
+          className={className}
+        />
+      </LocalizationProvider>
+
+      {/* {error && errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>} */}
+    </Box>
+  );
+};
+
+export default CustomDatePicker;
+--------------------------------------------------------------------------------------------------------
+
+
+This CustomDatePicker component is a custom implementation of a date picker in React, using Material UI's DatePicker from the @mui/x-date-pickers package. 
+Here's a breakdown of how this component works:
+
+1. Imports:
+React and useEffect are imported from React.
+DatePicker, DateValidationError, and LocalizationProvider are imported from @mui/x-date-pickers to provide the Material UI date picker functionality.
+Box is imported from @mui/material for layout styling.
+AdapterDateFns is used to integrate the date-fns date utility with the date picker.
+Lodash methods (max and subtract) and date-fns functions (addDays, addYears) are used for date manipulation.
+Styles from index.module.scss (CSS Modules) and variables.scss (SCSS styles) are also imported.
+2. Props:
+The CustomDatePicker component accepts several props:
+
+value: The currently selected date.
+onChange: A function to handle the date change event.
+error, errorMessage: To display validation errors.
+maxDate, futureDate: To control the maximum allowable date.
+fixedDate, dobDate, startDate: To manage various restrictions on the date picker.
+readOnly: If the picker should be read-only.
+iconStyles: Styles for the date picker icon.
+disabled: To disable the date picker input.
+className: CSS class for custom styling.
+3. Date Helper Functions:
+getYesterday: Returns the date of the previous day.
+getDate: Adjusts the passed date by adding one day.
+4. Date Calculations:
+calculatedMinDate: Defines a minimum date, which is 100 years before the maxDate if provided, else defaults to today's date.
+fixDates: Sets a specific date 59 days before today.
+min60: A calculated date 60 days before today (though it seems unused).
+5. Date Change Handling:
+handleDateChange: Processes the selected date. It verifies if the date is valid and formats it to YYYY-MM-DD (ISO format).
+It then passes this date back to the parent component using the onChange function. If no date is selected, it passes null.
+6. Error Handling:
+handleError: Catches and logs any validation errors from the date picker, though the function is currently not doing much.
+7. JSX (Render):
+The main component renders a Box component (from Material UI) to structure the layout.
+The LocalizationProvider wraps the DatePicker to provide locale-aware date handling using date-fns.
+The DatePicker:
+The value prop is the currently selected date.
+The onChange prop passes the handleDateChange function to handle changes in the selected date.
+The onError prop calls the handleError function when validation errors occur.
+minDate is conditionally set depending on props like dobDate, fixedDate, or startDate.
+maxDate is determined by whether futureDate is true, defaulting to today if not provided.
+A custom date format (dd MMM yyyy) is used for displaying the date.
+Custom styles are applied to the date picker using Material UI's sx prop, adjusting border colors, input text styles, and read-only or disabled state handling.
+The slotProps prop customizes the textField (input) and the openPickerIcon (icon to open the calendar picker). The icon is rendered as an image.
+The readOnly and disabled props are applied as passed from the parent.
+8. Styles:
+The component uses custom styling:
+
+Styling with the sx prop: This is a style configuration specific to Material UI. It modifies how the fieldset, input, and container behave, 
+handling hover and focus states, color, font size, and cursor behavior for both editable and read-only modes.
+slotProps: These properties customize the input field’s error handling, helper text, and the custom icon used for the date picker.
+
+To Keep the placeholder same as format this will be helpful
+  localeText={{
+            fieldMonthPlaceholder: () => 'MMM',
+          }}
+
+
+
+
+
+
