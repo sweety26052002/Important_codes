@@ -1,0 +1,32 @@
+There will be two pages, first page and second page.
+On refresh of second page it should land on second page.
+In second page:
+---------------------------------------------------------------------------------
+code:
+  useEffect(() => {
+    const isReloaded = sessionStorage.getItem('secondPageReloaded');
+    if (isReloaded !== null) {
+      sessionStorage.removeItem('secondPageReloaded');
+      navigate('/first-page');
+      
+    } else {
+      sessionStorage.setItem('secondPageReloaded', 'true');
+    }
+  }, [navigate]);
+----------------------------------------------------------------------------------
+
+After navigating from the First Page to the Second Page, the useEffect hook checks for the presence of the secondPageReloaded item in sessionStorage.
+
+If it's the first time landing on the Second Page, there will be no such item in sessionStorage. In this case, the code adds secondPageReloaded to sessionStorage
+and the user remains on the Second Page.
+Upon refreshing the Second Page, the item secondPageReloaded will now be present in sessionStorage, and the user will be redirected back to the First Page.
+
+In first Page:
+code:
+------------------------------------------------------------
+  sessionStorage.removeItem('secondPageReloaded');
+---------------------------------------------------------------
+
+When navigating back to the First Page, we remove secondPageReloaded from sessionStorage. This ensures that when the user navigates to the Second Page again,
+it will behave as though it is the first time. 
+If we don't remove this item, it might persist in storage, preventing the user from accessing the Second Page.
