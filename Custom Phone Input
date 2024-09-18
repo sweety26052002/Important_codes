@@ -1,0 +1,286 @@
+
+Code :
+index.tsx
+
+// PhoneInputField.tsx
+import React from 'react';
+import { Controller } from 'react-hook-form';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import styles from './index.module.scss';
+import { valueContainerCSS } from 'react-select/dist/declarations/src/components/containers';
+import {
+  CountryCode,
+  getCountries,
+  getCountryCallingCode,
+} from 'libphonenumber-js';
+
+// interface PhoneInputFieldProps {
+//   label?: string;
+//   control?: any; // Replace with the correct type from react-hook-form
+//   name?: string;
+//   defaultValue?: string;
+//   rules?: any; // Replace with the correct type from react-hook-form
+//   className?: string;
+//   placeholder?: string;
+// }
+
+// const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
+//   label,
+//   control,
+//   name,
+//   defaultValue,
+//   rules,
+//   className,
+//   placeholder = 'Enter phone number',
+// }) => (
+//   <div className={styles.phoneInputContainer}>
+//     <label >{label}</label>
+//     <Controller
+//       name={name}
+//       control={control}
+//       defaultValue={defaultValue}
+//       rules={rules}
+//       render={({ field }) => (
+//         <div className={className}>
+//           <PhoneInput
+//             {...field}
+//             international
+//             defaultCountry="IN"
+//             placeholder={placeholder}
+//             className={styles.phoneInput}
+//           />
+//         </div>
+//       )}
+//     />
+//   </div>
+// );
+
+// export default PhoneInputField;
+
+interface PhoneInputFieldProps {
+  label?: string;
+  control: any; // Correct type from react-hook-form
+  name: string;
+  defaultValue?: string;
+  rules?: any; // Correct type from react-hook-form
+  className?: string;
+  placeholder?: string;
+  errorExist?: boolean;
+  // countryCallingCodeEditable: boolean;
+  onBlur?: any;
+  // phoneBlur?: any;
+  phoneBlur?: () => void;
+  disabled: boolean;
+}
+var countryCode = '91';
+var defaultCountryCode: CountryCode | undefined = 'IN';
+const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
+  label,
+  control,
+  name,
+  defaultValue = '',
+  rules,
+  className,
+  errorExist,
+  placeholder = 'Enter phone number',
+  onBlur,
+  phoneBlur,
+  // countryCallingCodeEditable=false
+  disabled,
+}) => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // Prevent backspace and delete if cursor is at the beginning (right after the country code)
+    const input = event.target as HTMLInputElement;
+    const cursorPosition = input.selectionStart || 0;
+    const countryCodeLength = countryCode.length + 2 || 3; // Assumes a space follows the country code
+    // console.log(
+    //   event.key,
+    //   cursorPosition,
+    //   countryCodeLength,
+    //   'key name',
+    //   countryCode,
+    //   defaultValue
+    // );
+    if (
+      (event.key === 'Backspace' ||
+        event.key === 'Delete' ||
+        event.key === ' ') &&
+      cursorPosition <= countryCodeLength
+    ) {
+      // console.log(
+      //   event.key,
+      //   cursorPosition,
+      //   countryCodeLength,
+      //   'key name validate'
+      // );
+      event.preventDefault();
+    }
+  };
+  const handleCountry = (country: any) => {
+    // console.log(countryCode,country,"country code key name validate", getCountryCallingCode(country));
+    if (country.toString().length > 0) {
+      // console.log(
+      //   countryCode,
+      //   country,
+      //   'country code key name validate',
+      //   getCountryCallingCode(country)
+      // );
+      countryCode = getCountryCallingCode(country);
+      defaultCountryCode = country;
+    }
+    // countryCode = getCountryCallingCode(country)
+    // defaultCountryCode = country
+  };
+
+  return (
+    <div className={styles.Container}>
+      <p>{label}</p>
+      <div
+        className={`${styles.phoneInputContainer} ${
+          errorExist ? styles.errorInput : ''
+        }`}
+      >
+        <Controller
+          name={name}
+          control={control}
+          defaultValue={defaultValue}
+          rules={rules}
+          render={({
+            field: { onChange, onBlur:fieldOnBlur, value },
+            fieldState: { error },
+          }) => (
+            <div className={className}>
+              <PhoneInput
+                international
+                defaultCountry={defaultCountryCode}
+                placeholder={placeholder}
+                className={
+                  disabled
+                    ? `${styles.phoneInput} ${styles.phoneInputDisabled}`
+                    : `${styles.phoneInput}`
+                }
+                // countryCodeEditable = {false}
+                countryCallingCodeEditable={false} // false disable to country calling code editing
+                value={value}
+                onChange={onChange}
+                // onKeyDown={handleKeyDown}
+                onCountryChange={(country) => {
+                  if (country !== undefined) {
+                    // console.log(country, 'country');
+                    handleCountry(country);
+                  }
+                }}
+                // readOnly = {true}
+                // onBlur={(e) => {
+                //   phoneBlur();
+                // }}
+                onBlur={(e) => {
+                  fieldOnBlur();
+                  if (phoneBlur) {phoneBlur();}
+                  if (onBlur) {onBlur(e);}
+                }}
+                disabled={disabled}
+              />
+              {/* {error && <p className={styles.error}>{error.message}</p>} */}
+            </div>
+          )}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default PhoneInputField;
+-------------------------------------------------------------------------------------------------------
+
+index.modules.scss
+
+@import '../../styles/variables.scss';
+.Container {
+  display: flex;
+  flex-direction: column;
+}
+.phoneInput {
+  height: 100%;
+  padding-left: 12px;
+}
+.phoneInput input {
+  width: 100%;
+  // width: 234px;
+  height: 100%;
+  border: none;
+  border-left: 1px solid $grey;
+  margin: 0px 0px 0px 6px;
+  padding: 7px 0px 7px 12px;
+  // padding-left: 12px;
+  outline: none;
+  color: $blackBlue;
+  font-size: 16px;
+}
+.phoneInputContainer {
+  width: 100%;
+  // width: 400px;
+  height: 40px;
+  // padding: 0 12px;
+  border-radius: 2px;
+  border: 1px solid $grey;
+  background: rgba(255, 255, 255, 1);
+  display: flex;
+}
+.phoneInput input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #fff inset !important;
+  -webkit-text-fill-color: $blackBlue !important;
+  box-shadow: 0 0 0 30px #fff inset !important;
+}
+.phoneInput .phoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 15px !important;
+  padding-left: 12px !important;
+  // margin-left: 5px !important;
+  // margin: 0 0 0 12px !important;
+}
+.phoneInput .PhoneInputCountrySelectArrow {
+  display: block;
+  background-image: url('../../../assets/images/dropdown.svg');
+  width: 12px;
+  height: 12px;
+}
+.phoneInputContainer:focus-within{
+  border-color: #1859b4 !important;
+}
+.phoneInputContainer:hover {
+  border-color: #1859b4 !important;
+}
+@media (max-width: 950px) and (min-width: 700px) {
+  .phoneInput input {
+    width: 100%;
+  }
+  // .Container {
+  // width: 270px;
+  // }
+}
+
+@media (max-width: 699px) {
+  .phoneInput input {
+    width: 100%;
+  }
+  .Container {
+    width: 100%;
+  }
+}
+.errorInput {
+  border: 1px solid #E28619;
+}
+
+.phoneInputDisabled{
+  background-color: #f6f6f6;
+  cursor: not-allowed;
+  .phoneInputCountry{
+    // margin-left: 12px !important;
+    padding-left: 12px !important;
+  }
+}
+
+
